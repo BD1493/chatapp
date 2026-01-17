@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Chatbot</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1 id="title">Botz</h1>
+        </header>
+        <div class="chat-window">
+            <div class="bot">Hello! I am Botz, how can I help you today?</div>
+
+        </div>
+        <div class="input">
+            <input type="text" id="user-input" placeholder="Type your message here...">
+            <button id="send-button">Send</button>
+        </div>
+    </div>
+    <script>
+
+        //Get all elements 
+        const chatWindow = document.querySelector('.chat-window');
+        const userInput = document.querySelector('#user-input');
+        const sendButton = document.querySelector('#send-button');
+
+        async function getReply(message) {
+    
+        const apiKey = 'AIzaSyD2f5SAJYK5LzQIv4TGcU0Shoh7R_n6X7o';
+        const model = 'gemini-2.5-flash';
+
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
+
+        try {
+            const response = await fetch(url, {
+                method: 'POST',
+
+                headers: {
+                    'Content-Type': 'application/json',
+
+                    'x-goog-api-key': apiKey
+                },
+
+                body: JSON.stringify({
+                    contents: [
+                        {
+                            parts: [
+                                {
+                                    text: `You are an AI chatbot assistant. Your name is Botz. You are here to help users with their queries and provide information. You are friendly and helpful. User: ${message}`
+                                }
+                            ]
+                        }
+                    ]
+                })
+            });
+
+
+            if (!response.ok) {
+                throw new Error(`API request failed: ${response.status}`);
+            }
+
+
+            const data = await response.json();
+
+            const reply = data.candidates?.[0]?.content?.parts?.[0]?.text;
+
+            if (!reply) {
+                throw new Error('No response text found');
+            }
+
+            return reply;
+
+        } catch (error) {
+
+            console.error('Error calling Gemini API:', error);
+
+            return 'Sorry, I encountered an error. Please try again.';
+        }
+    }
+
+
+        //Add event listener to send button
+        sendButton.addEventListener('click', () => {
+            const userMessage = userInput.value;
+            if (userMessage.trim() !== '') {
+
+                //Add user message to chat window
+                const userMessageElement = document.createElement('div');
+                userMessageElement.classList.add('user');
+                userMessageElement.textContent = userMessage;
+                chatWindow.appendChild(userMessageElement);
+                userInput.value = '';
+
+                //Add bot message to chat window
+                const botMessageElement = document.createElement('div');
+                botMessageElement.classList.add('bot');
+                botMessageElement.textContent = 'Bot is thinking...';
+                chatWindow.appendChild(botMessageElement);
+
+                getReply(userMessage)
+                .then((reply) => {
+                    botMessageElement.textContent = reply;
+                })
+                .catch((error) => {
+                    console.error('Error getting reply:', error);
+                    botMessageElement.textContent = 'Sorry, I encountered an error. Please try again.';
+                });
+
+
+                chatWindow.scrollTop = chatWindow.scrollHeight;
+
+            } else {
+                alert('Please enter a message');
+            }
+        });
+
+        //Add event listener to user input
+        userInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                sendButton.click();
+            }
+        });
+
+        //Auto-scroll to bottom of chat window
+
+    </script>
+    
+</body>
+</html>
